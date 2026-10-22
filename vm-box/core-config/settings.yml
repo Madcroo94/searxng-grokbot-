@@ -3,6 +3,14 @@
 
 use_default_settings: true
 
+search:
+  # json lets the crawler call /search?q=...&format=json
+  formats:
+    - html
+    - json
+
 server:
-  secret_key: "change-this-secret-key-before-production"
+  # secret_key is read from SEARXNG_SECRET (.env). SearXNG refuses to start without it.
+  # The limiter stays off: this instance is private and the limiter would block the crawler.
+  limiter: false
   image_proxy: true

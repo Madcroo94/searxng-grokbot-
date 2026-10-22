@@ -5,22 +5,14 @@ services:
     image: docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}
     container_name: grokbot-searxng-core
     restart: unless-stopped
-    env_file: ./.env
+    environment:
+      - SEARXNG_SECRET=${SEARXNG_SECRET:?set SEARXNG_SECRET in .env (see README)}
+      - SEARXNG_PORT=${SEARXNG_PORT:-8080}
     ports:
-      - ${SEARXNG_HOST:-0.0.0.0}:${SEARXNG_PORT:-8080}:${SEARXNG_PORT:-8080}
+      - ${SEARXNG_HOST:-127.0.0.1}:${SEARXNG_PORT:-8080}:${SEARXNG_PORT:-8080}
     volumes:
       - ./core-config/:/etc/searxng/:Z
       - searxng-core-data:/var/cache/searxng/
-    depends_on:
-      - valkey
-
-  valkey:
-    image: docker.io/valkey/valkey:9-alpine
-    container_name: grokbot-valkey
-    command: valkey-server --save 300 1 --save 60 1000 --loglevel warning
-    restart: unless-stopped
-    volumes:
-      - valkey-data:/data/
 
   camoufox-server:
     build:
@@ -28,13 +20,15 @@ services:
       dockerfile: ./camoufox.Dockerfile
     container_name: grokbot-camoufox
     restart: unless-stopped
+    init: true
+    # Firefox needs more shared memory than Docker's 64 MB default.
+    shm_size: 1gb
     environment:
-      - CAMOUFOX_WS_PATH=${CAMOUFOX_WS_PATH:-camoufox}
+      - CAMOUFOX_WS_PATH=${CAMOUFOX_WS_PATH:?set CAMOUFOX_WS_PATH in .env (see README)}
       - CAMOUFOX_PORT=${CAMOUFOX_PORT:-9222}
       - CAMOUFOX_HEADLESS=${CAMOUFOX_HEADLESS:-true}
     ports:
-      - ${CAMOUFOX_HOST:-0.0.0.0}:${CAMOUFOX_PORT:-9222}:${CAMOUFOX_PORT:-9222}
+      - ${CAMOUFOX_HOST:-127.0.0.1}:${CAMOUFOX_PORT:-9222}:${CAMOUFOX_PORT:-9222}
 
 volumes:
   searxng-core-data:
-  valkey-data:
