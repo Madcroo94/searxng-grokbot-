@@ -1,0 +1,40 @@
+name: grokbot-vm
+
+services:
+  searxng-core:
+    image: docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}
+    container_name: grokbot-searxng-core
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - ${SEARXNG_HOST:-0.0.0.0}:${SEARXNG_PORT:-8080}:${SEARXNG_PORT:-8080}
+    volumes:
+      - ./core-config/:/etc/searxng/:Z
+      - searxng-core-data:/var/cache/searxng/
+    depends_on:
+      - valkey
+
+  valkey:
+    image: docker.io/valkey/valkey:9-alpine
+    container_name: grokbot-valkey
+    command: valkey-server --save 300 1 --save 60 1000 --loglevel warning
+    restart: unless-stopped
+    volumes:
+      - valkey-data:/data/
+
+  camoufox-server:
+    build:
+      context: .
+      dockerfile: ./camoufox.Dockerfile
+    container_name: grokbot-camoufox
+    restart: unless-stopped
+    environment:
+      - CAMOUFOX_WS_PATH=${CAMOUFOX_WS_PATH:-camoufox}
+      - CAMOUFOX_PORT=${CAMOUFOX_PORT:-9222}
+      - CAMOUFOX_HEADLESS=${CAMOUFOX_HEADLESS:-true}
+    ports:
+      - ${CAMOUFOX_HOST:-0.0.0.0}:${CAMOUFOX_PORT:-9222}:${CAMOUFOX_PORT:-9222}
+
+volumes:
+  searxng-core-data:
+  valkey-data:
